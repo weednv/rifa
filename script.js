@@ -10,23 +10,37 @@ const VALOR_NUMERO = 0.10;
 let quantidade = 150;
 
 // ===== DOM =====
-document.addEventListener("DOMContentLoaded", atualizarTela);
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarTela();
+});
 
 // ===== CONTROLES DE QUANTIDADE =====
+function setQtd(valor, elemento) {
+  quantidade = valor;
+
+  document
+    .querySelectorAll(".titulo-card")
+    .forEach(card => card.classList.remove("ativo"));
+
+  if (elemento) elemento.classList.add("ativo");
+
+  atualizarTela();
+}
+
 function alterar(delta) {
   quantidade += delta;
   if (quantidade < 1) quantidade = 1;
   atualizarTela();
 }
 
-function editarQuantidade(input) {
+function validarEdicaoManual(input) {
   const valor = parseInt(input.value);
   quantidade = isNaN(valor) || valor < 1 ? 1 : valor;
   atualizarTela();
 }
 
 function atualizarTela() {
-  const input = document.getElementById("qtdInput");
+  const input = document.getElementById("qtd");
   if (!input) return;
 
   input.value = quantidade;
@@ -35,8 +49,12 @@ function atualizarTela() {
     .toFixed(2)
     .replace(".", ",");
 
-  document.getElementById("valorTotal").innerText = `R$ ${total}`;
+  const totalEl = document.getElementById("valorTotal");
+  if (totalEl) {
+    totalEl.innerText = `R$ ${total}`;
+  }
 }
+
 
 // ===== PAGAMENTO =====
 async function pagar() {
