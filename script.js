@@ -1,6 +1,6 @@
 // ===== SUPABASE =====
 const SUPABASE_URL = 'https://gfxohxpjocogmxlmtyth.supabase.co';
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeG9oeHBqb2NvZ214bG10eXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NzAwMzUsImV4cCI6MjA4MjU0NjAzNX0.DYNNMEij4E8Rf0y1kpPD8FPtSqpbL1szz7R2Ql44ViE"; // ⚠️ ideal mover depois
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeG9oeHBqb2NvZ214bG10eXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NzAwMzUsImV4cCI6MjA4MjU0NjAzNX0.DYNNMEij4E8Rf0y1kpPD8FPtSqpbL1szz7R2Ql44ViE"; // depois mova para env
 const RIFA_ID = "d260157d-3dae-4266-bdbf-64f318ce791a";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -12,22 +12,29 @@ let quantidade = 150;
 // ===== DOM =====
 document.addEventListener("DOMContentLoaded", atualizarTela);
 
-// ===== CONTROLES =====
-function setQtd(valor, elemento) {
-  quantidade = valor;
-  document.querySelectorAll('.titulo-card').forEach(card => card.classList.remove('ativo'));
-  if (elemento) elemento.classList.add('ativo');
+// ===== CONTROLES DE QUANTIDADE =====
+function alterar(delta) {
+  quantidade += delta;
+  if (quantidade < 1) quantidade = 1;
   atualizarTela();
 }
 
-function alterar(delta) {
-  quantidade = Math.max(1, quantidade + delta);
+function editarQuantidade(input) {
+  const valor = parseInt(input.value);
+  quantidade = isNaN(valor) || valor < 1 ? 1 : valor;
   atualizarTela();
 }
 
 function atualizarTela() {
-  document.getElementById("qtd").value = quantidade;
-  const total = (quantidade * VALOR_NUMERO).toFixed(2).replace(".", ",");
+  const input = document.getElementById("qtdInput");
+  if (!input) return;
+
+  input.value = quantidade;
+
+  const total = (quantidade * VALOR_NUMERO)
+    .toFixed(2)
+    .replace(".", ",");
+
   document.getElementById("valorTotal").innerText = `R$ ${total}`;
 }
 
@@ -57,13 +64,13 @@ async function pagar() {
 
     if (error) throw error;
 
-    // 2️⃣ Gerar números
+    // 2️⃣ Gerar números disponíveis
     const usados = new Set(vendidos.map(v => v.numero));
     const numeros = gerarNumerosUnicos(quantidade, usados);
 
     if (!numeros.length) throw new Error("Sem números disponíveis");
 
-    // 3️⃣ Criar PIX (VERCEL)
+    // 3️⃣ Criar PIX (Vercel)
     const valorTotal = quantidade * VALOR_NUMERO;
 
     const reqPix = await fetch("/api/createPix", {
@@ -79,7 +86,7 @@ async function pagar() {
     const pix = await reqPix.json();
     if (!pix.qr) throw new Error("PIX não gerado");
 
-    // 4️⃣ Salvar números (pendente)
+    // 4️⃣ Salvar números como pendente
     const inserts = numeros.map(n => ({
       rifa_id: RIFA_ID,
       numero: n,
@@ -109,7 +116,7 @@ async function pagar() {
   }
 }
 
-// ===== AUX =====
+// ===== AUXILIARES =====
 function gerarNumerosUnicos(qtd, usados) {
   const nums = new Set();
   const MAX = 100000;
@@ -153,7 +160,9 @@ function fecharModal() {
 function validarContato(contato) {
   const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nums = contato.replace(/\D/g, "");
+
   if (email.test(contato)) return { valido: true, valor: contato };
   if (nums.length === 10 || nums.length === 11) return { valido: true, valor: nums };
+
   return { valido: false };
 }
