@@ -1,0 +1,10 @@
+{
+  "name": "pgt-rifa",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "mercadopago": "^2.11.0"
+  }
+}
