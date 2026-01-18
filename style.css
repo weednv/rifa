@@ -299,3 +299,38 @@ select,
 textarea {
   font-size: 16px;
 }
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+
+  .compra-container,
+  .compra-card,
+  .rifa-card,
+  .hero,
+  .topo {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+}
+
+.contador {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.contador input {
+  width: 100%;
+  max-width: 120px;
+}
