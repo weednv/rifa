@@ -46,19 +46,29 @@
 </div>
 
 
+<div class="contador">
+  <button class="btn-contador" onclick="alterar(-1)">−</button>
 
-   <div class="contador">
-  <button onclick="alterar(-1)">-</button>
-  
-  <input type="number" id="qtd" value="150" class="input-qtd" oninput="validarEdicaoManual(this)">
-  
-  <button onclick="alterar(1)">+</button>
+  <input 
+    type="number" 
+    id="qtd" 
+    value="150" 
+    class="input-qtd" 
+    oninput="validarEdicaoManual(this)"
+  >
+
+  <button class="btn-contador" onclick="alterar(1)">+</button>
 </div>
-
 
 <div class="total">
   Total: <strong id="valorTotal">R$ 0,00</strong>
 </div>
+
+<button class="btn-participar" onclick="acaoParticipar()">
+  Participar
+</button>
+
+  
 
 
 

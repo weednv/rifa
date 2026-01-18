@@ -327,10 +327,39 @@ html, body {
 
 .contador {
   max-width: 100%;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
 }
 
 .contador input {
-  width: 100%;
-  max-width: 120px;
+  width: 80px;
+  height: 44px;
+  text-align: center;
+  font-size: 18px;
+  border-radius: 12px;
+  border: none;
+  background: #0f172a;
+  color: #fff;
+  outline: none;
+}
+
+.btn-contador {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #1f2937;
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-contador:hover {
+  background: #374151;
+  transform: scale(1.08);
 }
