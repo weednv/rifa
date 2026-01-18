@@ -1,8 +1,3 @@
-// ===== SUPABASE CONFIG =====
-var SUPABASE_URL = "https://gfxohxpjocogmxlmtyth.supabase.co";
-var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeG9oeHBqb2NvZ214bG10eXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NzAwMzUsImV4cCI6MjA4MjU0NjAzNX0.DYNNMEij4E8Rf0y1kpPD8FPtSqpbL1szz7R2Ql44ViE"; // mantenha a sua key
-var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // ===== DOM =====
 document.addEventListener("DOMContentLoaded", () => {
   const btnMeusNumeros = document.getElementById("btnMeusNumeros");
@@ -14,7 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const fechar = document.querySelector(".fechar");
 
   // Segurança
-  if (!btnMeusNumeros || !modal) return;
+  if (!btnMeusNumeros || !modal || typeof sb === "undefined") {
+    console.error("Supabase (sb) não encontrado");
+    return;
+  }
 
   // Abrir modal
   btnMeusNumeros.addEventListener("click", (e) => {
@@ -34,38 +32,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Buscar números
   btnBuscar.addEventListener("click", async () => {
-  let contato = contatoInput.value.trim();
+    let contato = contatoInput.value.trim();
 
-  if (!contato) {
-    resultado.innerText = "Digite seu email ou telefone";
-    return;
-  }
+    if (!contato) {
+      resultado.innerText = "Digite seu email ou telefone";
+      return;
+    }
 
-  // Normaliza telefone
-  const soNumeros = contato.replace(/\D/g, "");
-  if (soNumeros.length >= 10) {
-    contato = soNumeros;
-  }
+    // Normaliza telefone
+    const soNumeros = contato.replace(/\D/g, "");
+    if (soNumeros.length >= 10) {
+      contato = soNumeros;
+    }
 
-  resultado.innerText = "Buscando seus números...";
+    resultado.innerText = "Buscando seus números...";
 
-  const { data, error } = await sb
-    .from("numeros_vendidos")
-    .select("numero, status")
-    .eq("contato", contato)
-    .order("numero", { ascending: true });
+    const { data, error } = await sb
+      .from("numeros_vendidos")
+      .select("numero, status")
+      .eq("contato", contato)
+      .order("numero", { ascending: true });
 
-  if (error || !data || !data.length) {
-    resultado.innerText = "Nenhum número encontrado";
-    return;
-  }
+    if (error || !data || !data.length) {
+      resultado.innerText = "Nenhum número encontrado";
+      return;
+    }
 
-  resultado.innerHTML =
-    "<b>Seus números:</b><br><br>" +
-    data
-      .map(n =>
-        `${n.numero.toString().padStart(5, "0")} <small>(${n.status})</small>`
-      )
-      .join(", ");
-});
+    resultado.innerHTML =
+      "<b>Seus números:</b><br><br>" +
+      data
+        .map(n =>
+          `${n.numero.toString().padStart(5, "0")} <small>(${n.status})</small>`
+        )
+        .join(", ");
+  });
 });
