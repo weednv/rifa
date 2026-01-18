@@ -106,11 +106,12 @@ async function pagar() {
 
     // 4️⃣ Salvar números como pendente
     const inserts = numeros.map(n => ({
-      rifa_id: RIFA_ID,
-      numero: n,
-      contato,
-      status: "pendente"
-    }));
+  rifa_id: RIFA_ID,
+  numero: n,
+  contato,
+  status: "pendente",
+  payment_id: pix.payment_id 
+}));
 
     const { error: insertError } = await sb
       .from("numeros_vendidos")
@@ -168,6 +169,10 @@ function abrirModal(qtd, contato) {
     document.getElementById("valorTotal").innerText;
   document.getElementById("modalContato").innerText = contato;
   document.getElementById("modalPagamento").style.display = "block";
+  <p id="statusPagamento" class="status-pendente">
+  ⏳ Aguardando pagamento
+</p>
+
 }
 
 function fecharModal() {
@@ -183,4 +188,11 @@ function validarContato(contato) {
   if (nums.length === 10 || nums.length === 11) return { valido: true, valor: nums };
 
   return { valido: false };
+}
+
+function acaoParticipar() {
+  const etapa = document.getElementById("etapaPagamento");
+  etapa.style.display = "block";
+
+  etapa.scrollIntoView({ behavior: "smooth" });
 }

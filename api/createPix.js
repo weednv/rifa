@@ -26,8 +26,10 @@ export default async function handler(req, res) {
       }
     });
 
+    // ✅ RETORNO CORRETO
     res.status(200).json({
-      qr: payment.body.point_of_interaction.transaction_data.qr_code_base64
+      qr: payment.body.point_of_interaction.transaction_data.qr_code_base64,
+      payment_id: payment.body.id // 👈 ESSENCIAL
     });
 
   } catch (error) {
