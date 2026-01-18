@@ -18,10 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function setQtd(valor, elemento) {
   quantidade = valor;
 
-  document
-    .querySelectorAll(".titulo-card")
-    .forEach(card => card.classList.remove("ativo"));
-
+  document.querySelectorAll(".titulo-card").forEach(card => card.classList.remove("ativo"));
   if (elemento) elemento.classList.add("ativo");
 
   atualizarTela();
@@ -45,16 +42,86 @@ function atualizarTela() {
 
   input.value = quantidade;
 
-  const total = (quantidade * VALOR_NUMERO)
-    .toFixed(2)
-    .replace(".", ",");
-
+  const total = (quantidade * VALOR_NUMERO).toFixed(2).replace(".", ",");
   const totalEl = document.getElementById("valorTotal");
-  if (totalEl) {
-    totalEl.innerText = `R$ ${total}`;
-  }
+  if (totalEl) totalEl.innerText = `R$ ${total}`;
 }
 
+// ===== MODAIS =====
+function initModais() {
+  // Modal Meus Números
+  const btnMeusNumeros = document.getElementById("btnMeusNumeros");
+  const modalNumeros = document.getElementById("modalNumeros");
+  const btnBuscar = document.getElementById("btnBuscar");
+  const btnVoltar = document.getElementById("btnVoltar");
+  const resultado = document.getElementById("resultado");
+  const contatoInput = document.getElementById("contato");
+  const fecharNumeros = modalNumeros.querySelector(".fechar");
+
+  if (btnMeusNumeros) btnMeusNumeros.addEventListener("click", e => {
+    e.preventDefault();
+    modalNumeros.style.display = "flex";
+  });
+
+  const fecharModalNumeros = () => {
+    modalNumeros.style.display = "none";
+    resultado.innerHTML = "";
+    contatoInput.value = "";
+  };
+
+  if (btnVoltar) btnVoltar.addEventListener("click", fecharModalNumeros);
+  if (fecharNumeros) fecharNumeros.addEventListener("click", fecharModalNumeros);
+
+  // Buscar números
+  if (btnBuscar) btnBuscar.addEventListener("click", async () => {
+    let contato = contatoInput.value.trim();
+    if (!contato) {
+      resultado.innerText = "Digite seu email ou telefone";
+      return;
+    }
+    const soNumeros = contato.replace(/\D/g, "");
+    if (soNumeros.length >= 10) contato = soNumeros;
+
+    resultado.innerText = "Buscando seus números...";
+
+    try {
+      const res = await fetch("/api/buscarNumeros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contato })
+      });
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        resultado.innerText = "Nenhum número encontrado";
+        return;
+      }
+
+      resultado.innerHTML =
+        "<b>Seus números:</b><br><br>" +
+        data.map(n => `${n.numero.toString().padStart(5,"0")} <small>(${n.status})</small>`).join(", ");
+
+    } catch (err) {
+      console.error(err);
+      resultado.innerText = "Erro ao buscar números";
+    }
+  });
+
+  // Modal Pagamento
+  const modalPagamento = document.getElementById("modalPagamento");
+  const fecharPagamento = modalPagamento.querySelector(".close");
+  if (fecharPagamento) fecharPagamento.addEventListener("click", () => {
+    modalPagamento.style.display = "none";
+  });
+
+  // Copiar PIX
+  const btnCopiarPix = document.getElementById("btnCopiarPix");
+  if (btnCopiarPix) btnCopiarPix.addEventListener("click", () => {
+    const pix = document.getElementById("chavePix");
+    navigator.clipboard.writeText(pix.innerText);
+    alert("Chave PIX copiada!");
+  });
+}
 
 // ===== PAGAMENTO =====
 async function pagar() {
@@ -88,43 +155,43 @@ async function pagar() {
 
     if (!numeros.length) throw new Error("Sem números disponíveis");
 
-    // 3️⃣ Criar PIX (Vercel)
+    // 3️⃣ Criar PIX via backend
     const valorTotal = quantidade * VALOR_NUMERO;
 
     const reqPix = await fetch("/api/createPix", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: contato,
-        email: contato,
-        valor: valorTotal
-      })
+      body: JSON.stringify({ name: contato, email: contato, valor: valorTotal })
     });
-
     const pix = await reqPix.json();
     if (!pix.qr) throw new Error("PIX não gerado");
 
     // 4️⃣ Salvar números como pendente
     const inserts = numeros.map(n => ({
-  rifa_id: RIFA_ID,
-  numero: n,
-  contato,
-  status: "pendente",
-  payment_id: pix.payment_id 
-}));
+      rifa_id: RIFA_ID,
+      numero: n,
+      contato,
+      status: "pendente",
+      pagamento_id: pix.payment_id,
+      valor_pago: valorTotal
+    }));
 
     const { error: insertError } = await sb
       .from("numeros_vendidos")
       .insert(inserts);
-
     if (insertError) throw insertError;
 
     // 5️⃣ Mostrar QR Code
-    document.getElementById("qrPix").src =
-      `data:image/png;base64,${pix.qr}`;
+    document.getElementById("qrPix").src = `data:image/png;base64,${pix.qr}`;
 
-    mostrarNumeros(numeros);
-    abrirModal(quantidade, contato);
+    // Atualizar modal
+    document.getElementById("modalQtd").innerText = quantidade;
+    document.getElementById("modalTotal").innerText =
+      document.getElementById("valorTotal").innerText;
+    document.getElementById("modalContato").innerText = contato;
+    document.getElementById("statusPagamento").innerText = "⏳ Aguardando pagamento";
+
+    document.getElementById("modalPagamento").style.display = "block";
 
   } catch (err) {
     console.error(err);
@@ -139,47 +206,13 @@ async function pagar() {
 function gerarNumerosUnicos(qtd, usados) {
   const nums = new Set();
   const MAX = 100000;
-
   while (nums.size < qtd && usados.size + nums.size < MAX) {
     const n = Math.floor(Math.random() * MAX);
     if (!usados.has(n)) nums.add(n);
   }
-
   return Array.from(nums).sort((a, b) => a - b);
 }
 
-function mostrarNumeros(numeros) {
-  const area = document.getElementById("areaNumeros");
-  const grid = document.getElementById("numeros");
-  grid.innerHTML = "";
-  area.style.display = "block";
-
-  numeros.forEach(n => {
-    const div = document.createElement("div");
-    div.className = "numero";
-    div.innerText = n.toString().padStart(5, "0");
-    grid.appendChild(div);
-  });
-}
-
-// ===== MODAL =====
-function abrirModal(qtd, contato) {
-  document.getElementById("modalQtd").innerText = qtd;
-  document.getElementById("modalTotal").innerText =
-    document.getElementById("valorTotal").innerText;
-  document.getElementById("modalContato").innerText = contato;
-  document.getElementById("modalPagamento").style.display = "block";
-  <p id="statusPagamento" class="status-pendente">
-  ⏳ Aguardando pagamento
-</p>
-
-}
-
-function fecharModal() {
-  document.getElementById("modalPagamento").style.display = "none";
-}
-
-// ===== VALIDACAO =====
 function validarContato(contato) {
   const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nums = contato.replace(/\D/g, "");
@@ -188,11 +221,4 @@ function validarContato(contato) {
   if (nums.length === 10 || nums.length === 11) return { valido: true, valor: nums };
 
   return { valido: false };
-}
-
-function acaoParticipar() {
-  const etapa = document.getElementById("etapaPagamento");
-  etapa.style.display = "block";
-
-  etapa.scrollIntoView({ behavior: "smooth" });
 }

@@ -1,4 +1,3 @@
-// ===== DOM =====
 document.addEventListener("DOMContentLoaded", () => {
   const btnMeusNumeros = document.getElementById("btnMeusNumeros");
   const modal = document.getElementById("modalNumeros");
@@ -8,11 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const contatoInput = document.getElementById("contato");
   const fechar = document.querySelector(".fechar");
 
-  // Segurança
-  if (!btnMeusNumeros || !modal || typeof sb === "undefined") {
-    console.error("Supabase (sb) não encontrado");
-    return;
-  }
+  if (!btnMeusNumeros || !modal) return;
 
   // Abrir modal
   btnMeusNumeros.addEventListener("click", (e) => {
@@ -30,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnVoltar) btnVoltar.addEventListener("click", fecharModal);
   if (fechar) fechar.addEventListener("click", fecharModal);
 
-  // Buscar números
+  // 🔎 BUSCAR NÚMEROS (AQUI ESTAVA O ERRO)
   btnBuscar.addEventListener("click", async () => {
     let contato = contatoInput.value.trim();
 
@@ -39,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Normaliza telefone
+    // normaliza telefone
     const soNumeros = contato.replace(/\D/g, "");
     if (soNumeros.length >= 10) {
       contato = soNumeros;
@@ -47,23 +42,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resultado.innerText = "Buscando seus números...";
 
-    const { data, error } = await sb
-      .from("numeros_vendidos")
-      .select("numero, status")
-      .eq("contato", contato)
-      .order("numero", { ascending: true });
+    try {
+      const res = await fetch("/api/buscarNumeros", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ contato })
+      });
 
-    if (error || !data || !data.length) {
-      resultado.innerText = "Nenhum número encontrado";
-      return;
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        resultado.innerText = "Nenhum número encontrado";
+        return;
+      }
+
+      resultado.innerHTML =
+        "<b>Seus números:</b><br><br>" +
+        data
+          .map(n =>
+            `${n.numero.toString().padStart(5, "0")} <small>(${n.status})</small>`
+          )
+          .join(", ");
+
+    } catch (err) {
+      console.error(err);
+      resultado.innerText = "Erro ao buscar números";
     }
-
-    resultado.innerHTML =
-      "<b>Seus números:</b><br><br>" +
-      data
-        .map(n =>
-          `${n.numero.toString().padStart(5, "0")} <small>(${n.status})</small>`
-        )
-        .join(", ");
   });
 });

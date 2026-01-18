@@ -41,6 +41,7 @@
 
 
 <!-- MODAL MEUS NÚMEROS -->
+<!-- MODAL MEUS NÚMEROS -->
 <div id="modalNumeros" class="modal">
   <div class="modal-box">
     <span class="fechar">&times;</span>
@@ -60,43 +61,44 @@
     <div class="modal-acoes">
       <button id="btnVoltar" class="btn-voltar-modal">Voltar</button>
     </div>
-
   </div>
 </div>
 
-
-
+<!-- MODAL PAGAMENTO -->
 <div id="modalPagamento" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="fecharModal()">&times;</span>
-        
-        <div class="modal-header">
-            <h3>Confirmação do Pedido</h3>
-        </div>
-
-        <div class="modal-body">
-            <p><strong>Rifa:</strong> POP 2026 0KM</p>
-            <p><strong>Quantidade:</strong> <span id="modalQtd">0</span> números</p>
-            <p><strong>Total:</strong> <strong id="modalTotal">R$ 0,00</strong></p>
-            <p><strong>Contato:</strong> <span id="modalContato"></span></p>
-            
-            <hr>
-            
-            <div class="pix-area">
-                <p>Escaneie o QR Code ou copie a chave PIX abaixo:</p>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ChavePixExemplo" alt="QR Code PIX">
-                <div class="pix-copia-cola">
-                    <code>chave-pix-aleatoria-123456789</code>
-                    <button onclick="alert('Copiado!')">Copiar</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-footer">
-            <button class="btn-confirmar" onclick="fecharModal()">Já realizei o pagamento</button>
-        </div>
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    
+    <div class="modal-header">
+      <h3>Confirmação do Pedido</h3>
     </div>
+
+    <div class="modal-body">
+      <p><strong>Rifa:</strong> Iphone 17 Pro Max</p>
+      <p><strong>Quantidade:</strong> <span id="modalQtd">0</span> números</p>
+      <p><strong>Total:</strong> <strong id="modalTotal">R$ 0,00</strong></p>
+      <p><strong>Contato:</strong> <span id="modalContato"></span></p>
+
+      <p id="statusPagamento" class="status-pendente">⏳ Aguardando pagamento</p>
+
+      <hr>
+
+      <div class="pix-area">
+        <p>Escaneie o QR Code ou copie a chave PIX abaixo:</p>
+        <img id="qrPix" src="" alt="QR Code PIX">
+        <div class="pix-copia-cola">
+          <code id="chavePix">chave-pix-aleatoria-123456789</code>
+          <button id="btnCopiarPix">Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirmar" onclick="fecharModal()">Já realizei o pagamento</button>
+    </div>
+  </div>
 </div>
+
 <!-- SUPABASE (OBRIGATÓRIO) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
