@@ -65,11 +65,15 @@
         placeholder="Digite seu email ou WhatsApp com DDD"
       >
 
-      <div class="pix-box">
-        <p>Chave PIX:</p>
-        <input type="text" id="pixKey" value="81989715761" readonly>
-        <button type="button" onclick="copiarPix()">Copiar PIX</button>
+      <div class="pix-box" id="pixResultado" style="display:none">
+      <p>Escaneie o QR Code:</p>
+      <img id="qrPix" style="width:200px;margin:10px auto;display:block">
+
+      <p>PIX copia e cola:</p>
+      <textarea id="pixCode" readonly></textarea>
+      <button type="button" onclick="copiarPix()">Copiar PIX</button>
       </div>
+
 
       <!-- Botão para gerar PIX -->
       <button class="btn-pagar" id="btnConfirmarPagamento">

@@ -79,16 +79,14 @@ async function pagar() {
   btn.innerText = "Gerando PIX...";
 
   try {
-    // Calcular valor total
     const valorTotal = quantidade * VALOR_NUMERO;
 
-    // Chamar backend para gerar PIX e salvar pagamento pendente
     const res = await fetch("/api/createPix", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: contato,
-        email: contato,
+        name: "Cliente Rifa",
+        email: contato.includes("@") ? contato : "pix@rifa.com",
         valor: valorTotal,
         rifa_id: RIFA_ID,
         quantidade
@@ -97,24 +95,29 @@ async function pagar() {
 
     const pix = await res.json();
 
-    if (!pix.qr) throw new Error("PIX não gerado");
+    if (!pix.qr || !pix.pix_copia_e_cola) {
+      throw new Error("PIX inválido");
+    }
 
-    // Mostrar QR code e detalhes
-    document.getElementById("qrPix").src = `data:image/png;base64,${pix.qr}`;
-    document.getElementById("modalQtd").innerText = quantidade;
-    document.getElementById("modalTotal").innerText = `R$ ${valorTotal.toFixed(2).replace(".", ",")}`;
-    document.getElementById("modalContato").innerText = contato;
-    document.getElementById("statusPagamento").innerText = "⏳ Aguardando pagamento";
-    document.getElementById("modalPagamento").style.display = "block";
+    // 🔥 MOSTRAR PIX DINÂMICO
+    document.getElementById("pixResultado").style.display = "block";
+    document.getElementById("qrPix").src =
+      `data:image/png;base64,${pix.qr}`;
+    document.getElementById("pixCode").value =
+      pix.pix_copia_e_cola;
+
+    // Feedback visual
+    document.getElementById("btnConfirmarPagamento").innerText =
+      "PIX Gerado ✔";
 
   } catch (err) {
     console.error(err);
     alert("Erro ao gerar pagamento. Tente novamente.");
-  } finally {
-    btn.disabled = false;
     btn.innerText = "Confirmar e Gerar PIX";
+    btn.disabled = false;
   }
 }
+
 
 // ===== AUXILIARES =====
 function validarContato(contato) {
@@ -124,3 +127,18 @@ function validarContato(contato) {
   if (nums.length === 10 || nums.length === 11) return { valido: true, valor: nums };
   return { valido: false };
 }
+
+
+function copiarPix() {
+  const pix = document.getElementById("pixCode");
+  if (!pix) return;
+
+  pix.select();
+  pix.setSelectionRange(0, 99999);
+
+  navigator.clipboard.writeText(pix.value)
+    .then(() => alert("PIX copiado!"))
+    .catch(() => alert("Erro ao copiar o PIX"));
+}
+
+
