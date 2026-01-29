@@ -81,14 +81,23 @@ async function pagar() {
       body: JSON.stringify({
         name: "Cliente Rifa",
         email: contato.includes("@") ? contato : "pix@rifa.com",
-        contato, // 👈 vínculo real
+        contato, // vínculo real
         valor: valorTotal,
         rifa_id: RIFA_ID,
         quantidade
       })
     });
 
-    const pix = await res.json();
+    const text = await res.text();
+
+    let pix;
+    try {
+      pix = JSON.parse(text);
+    } catch (e) {
+      console.error("Resposta não é JSON:", text);
+      throw new Error("Erro no servidor");
+    }
+
     if (!pix.qr || !pix.pix_copia_e_cola) {
       throw new Error("PIX inválido");
     }
@@ -103,12 +112,13 @@ async function pagar() {
     btn.innerText = "PIX Gerado ✔";
 
   } catch (err) {
-    console.error(err);
+    console.error("Erro no pagamento:", err);
     alert("Erro ao gerar pagamento.");
     btn.innerText = "Confirmar e Gerar PIX";
     btn.disabled = false;
   }
 }
+
 
 // ===== AUXILIARES =====
 function validarContato(contato) {
