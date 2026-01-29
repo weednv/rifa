@@ -1,9 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // backend only
-);
+import { connectMongo } from "../lib/mongodb";
+import Numero from "../models/numero";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -12,24 +8,19 @@ export default async function handler(req, res) {
 
   try {
     const { contato } = req.body;
-
     if (!contato) {
       return res.status(400).json({ error: "Contato obrigatório" });
     }
 
-    const { data, error } = await supabase
-      .from("numeros_vendidos")
-      .select("numero, status")
-      .eq("contato", contato)
-      .order("numero", { ascending: true });
+    await connectMongo();
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    const numeros = await Numero
+      .find({ contato })
+      .sort({ numero: 1 });
 
-    return res.status(200).json(data || []);
+    return res.status(200).json(numeros);
   } catch (err) {
-    console.error("Erro buscarNumeros:", err);
-    return res.status(500).json({ error: "Erro interno na API" });
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao buscar números" });
   }
 }

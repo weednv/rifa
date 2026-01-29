@@ -1,9 +1,6 @@
 import { MercadoPagoConfig, Payment } from "mercadopago";
-import { createClient } from "@supabase/supabase-js";
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+import { connectMongo } from "../lib/mongodb";
+import Pagamento from "../models/Pagamento";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,11 +10,6 @@ export default async function handler(req, res) {
   try {
     const { name, email, valor, rifa_id, quantidade } = req.body;
 
-    if (!process.env.MP_ACCESS_TOKEN) {
-      return res.status(500).json({ error: "Token MP não configurado" });
-    }
-
-    // ✅ NOVO SDK
     const client = new MercadoPagoConfig({
       accessToken: process.env.MP_ACCESS_TOKEN,
     });
@@ -33,22 +25,21 @@ export default async function handler(req, res) {
           email,
           first_name: name,
         },
+        notification_url: `${process.env.BASE_URL}/api/webhook`,
       },
     });
 
-    // ✅ Salvar pagamento pendente no Supabase (SEM ALTERAR LÓGICA)
-    await sb.from("pagamentos_pendentes").insert([
-      {
-        rifa_id,
-        contato: email,
-        quantidade,
-        valor_total: valor,
-        payment_id: result.id,
-        status: "pendente",
-      },
-    ]);
+    // 🔥 salva no Mongo
+    await connectMongo();
+    await Pagamento.create({
+      rifa_id,
+      contato: email,
+      quantidade,
+      valor_total: valor,
+      payment_id: result.id,
+      status: "pendente",
+    });
 
-    // ✅ Retorno igual ao esperado no front
     return res.status(200).json({
       qr: result.point_of_interaction.transaction_data.qr_code_base64,
       pix_copia_e_cola:

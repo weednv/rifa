@@ -1,12 +1,6 @@
-// ===== SUPABASE =====
-const SUPABASE_URL = 'https://gfxohxpjocogmxlmtyth.supabase.co';
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeG9oeHBqb2NvZ214bG10eXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NzAwMzUsImV4cCI6MjA4MjU0NjAzNX0.DYNNMEij4E8Rf0y1kpPD8FPtSqpbL1szz7R2Ql44ViE"; // ⚠️ só leitura no frontend
-const RIFA_ID = "35885492-a1d4-41c5-8aee-ff7984b2dfec";
-
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // ===== CONFIG =====
 const VALOR_NUMERO = 0.10;
+const RIFA_ID = "35885492-a1d4-41c5-8aee-ff7984b2dfec";
 let quantidade = 150;
 
 // ===== DOM =====
@@ -18,7 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===== CONTROLES DE QUANTIDADE =====
 function setQtd(valor, elemento) {
   quantidade = valor;
-  document.querySelectorAll(".titulo-card").forEach(card => card.classList.remove("ativo"));
+  document.querySelectorAll(".titulo-card")
+    .forEach(card => card.classList.remove("ativo"));
   if (elemento) elemento.classList.add("ativo");
   atualizarTela();
 }
@@ -40,9 +35,10 @@ function atualizarTela() {
   if (!input) return;
 
   input.value = quantidade;
-  const total = (quantidade * VALOR_NUMERO).toFixed(2).replace(".", ",");
-  const totalEl = document.getElementById("valorTotal");
-  if (totalEl) totalEl.innerText = `R$ ${total}`;
+  const total = (quantidade * VALOR_NUMERO)
+    .toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  document.getElementById("valorTotal").innerText = total;
 }
 
 // ===== PARTICIPAR =====
@@ -51,13 +47,11 @@ function initParticipar() {
   const etapa = document.getElementById("etapaPagamento");
   const btnConfirmar = document.getElementById("btnConfirmarPagamento");
 
-  // Mostrar input de contato
   btnParticipar.addEventListener("click", () => {
     etapa.style.display = "block";
     etapa.scrollIntoView({ behavior: "smooth" });
   });
 
-  // Confirmar e gerar PIX
   btnConfirmar.addEventListener("click", pagar);
 }
 
@@ -87,6 +81,7 @@ async function pagar() {
       body: JSON.stringify({
         name: "Cliente Rifa",
         email: contato.includes("@") ? contato : "pix@rifa.com",
+        contato, // 👈 vínculo real
         valor: valorTotal,
         rifa_id: RIFA_ID,
         quantidade
@@ -94,51 +89,67 @@ async function pagar() {
     });
 
     const pix = await res.json();
-
     if (!pix.qr || !pix.pix_copia_e_cola) {
       throw new Error("PIX inválido");
     }
 
-    // 🔥 MOSTRAR PIX DINÂMICO
     document.getElementById("pixResultado").style.display = "block";
     document.getElementById("qrPix").src =
       `data:image/png;base64,${pix.qr}`;
     document.getElementById("pixCode").value =
       pix.pix_copia_e_cola;
 
-    // Feedback visual
-    document.getElementById("btnConfirmarPagamento").innerText =
-      "PIX Gerado ✔";
+    iniciarVerificacaoPagamento(pix.payment_id);
+    btn.innerText = "PIX Gerado ✔";
 
   } catch (err) {
     console.error(err);
-    alert("Erro ao gerar pagamento. Tente novamente.");
+    alert("Erro ao gerar pagamento.");
     btn.innerText = "Confirmar e Gerar PIX";
     btn.disabled = false;
   }
 }
-
 
 // ===== AUXILIARES =====
 function validarContato(contato) {
   const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nums = contato.replace(/\D/g, "");
   if (email.test(contato)) return { valido: true, valor: contato };
-  if (nums.length === 10 || nums.length === 11) return { valido: true, valor: nums };
+  if (nums.length === 10 || nums.length === 11)
+    return { valido: true, valor: nums };
   return { valido: false };
 }
 
-
 function copiarPix() {
   const pix = document.getElementById("pixCode");
-  if (!pix) return;
-
   pix.select();
-  pix.setSelectionRange(0, 99999);
-
   navigator.clipboard.writeText(pix.value)
-    .then(() => alert("PIX copiado!"))
-    .catch(() => alert("Erro ao copiar o PIX"));
+    .then(() => alert("PIX copiado!"));
 }
 
+// ===== VERIFICAR PAGAMENTO =====
+function iniciarVerificacaoPagamento(paymentId) {
+  const intervalo = setInterval(async () => {
+    try {
+      const res = await fetch(
+        `/api/consultarPagamento?payment_id=${paymentId}`
+      );
+      const data = await res.json();
 
+      if (data.status === "pago") {
+        clearInterval(intervalo);
+        mostrarNumeros(data.numeros);
+      }
+    } catch (e) {
+      console.error("Erro ao consultar pagamento", e);
+    }
+  }, 4000);
+}
+
+// ===== MOSTRAR NÚMEROS =====
+function mostrarNumeros(numeros) {
+  alert(
+    "✅ Pagamento confirmado!\n\nSeus números:\n" +
+    numeros.join(", ")
+  );
+}
