@@ -1,6 +1,6 @@
 import { MercadoPagoConfig, Payment } from "mercadopago";
-import { connectMongo } from "../lib/mongodb";
-import Pagamento from "../models/Pagamento";
+import { connectMongo } from "../lib/mongodb.js";
+import Pagamento from "../models/Pagamento.js";
 import Numero from "../models/numero";
 
 export default async function handler(req, res) {

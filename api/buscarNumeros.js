@@ -1,5 +1,5 @@
-import { connectMongo } from "../lib/mongodb";
-import Numero from "../models/numero";
+import { connectMongo } from "../lib/mongodb.js";
+import Numero from "../models/numero.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
