@@ -73,7 +73,8 @@ async function pagar() {
   btn.innerText = "Gerando PIX...";
 
   try {
-    const valorTotal = quantidade * VALOR_NUMERO;
+    const valorTotal = Number((quantidade * VALOR_NUMERO).toFixed(2));
+
 
     const res = await fetch("/api/createPix", {
       method: "POST",
