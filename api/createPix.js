@@ -19,25 +19,35 @@ export default async function handler(req, res) {
     const client = new MercadoPagoConfig({
       accessToken: process.env.MP_ACCESS_TOKEN,
     });
+
     const payment = new Payment(client);
 
-    const result = await payment.create({
-      body: {
-        transaction_amount: Number(valor),
-        description: "Pagamento Rifa",
-        payment_method_id: "pix",
-        payer: { email, first_name: name },
-
-        // ✅ deixe, mas SÓ se BASE_URL estiver correto (https)
-        notification_url: `${process.env.BASE_URL}/api/webhook`,
+    const body = {
+      transaction_amount: Number(valor),
+      description: "Pagamento Rifa",
+      payment_method_id: "pix",
+      payer: {
+        email,
+        first_name: name,
       },
-    });
+    };
 
-    const qrBase64 = result?.point_of_interaction?.transaction_data?.qr_code_base64;
+    // ✅ só adiciona webhook se BASE_URL existir
+    if (process.env.BASE_URL) {
+      body.notification_url = `${process.env.BASE_URL}/api/webhook`;
+    }
+
+    const result = await payment.create({ body });
+
+    const qrBase64 =
+      result?.point_of_interaction?.transaction_data?.qr_code_base64;
     const copiaCola = result?.point_of_interaction?.transaction_data?.qr_code;
 
     if (!qrBase64 || !copiaCola) {
-      return res.status(500).json({ error: "MP não retornou QR PIX" });
+      return res.status(500).json({
+        error: "MP não retornou QR PIX",
+        detalhe: "point_of_interaction.transaction_data vazio",
+      });
     }
 
     await Pagamento.create({
@@ -58,9 +68,16 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("ERRO MP:", error);
+
+    const detalhe =
+      error?.cause?.[0]?.description ||
+      error?.cause?.[0]?.message ||
+      error?.message ||
+      "Erro desconhecido";
+
     return res.status(500).json({
       error: "Erro ao gerar PIX",
-      detalhe: error?.message || "erro",
+      detalhe,
     });
   }
 }

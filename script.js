@@ -81,7 +81,7 @@ async function pagar() {
       body: JSON.stringify({
         name: "Cliente Rifa",
         email: contato.includes("@") ? contato : "pix@rifa.com",
-        contato, // vínculo real
+        contato,
         valor: valorTotal,
         rifa_id: RIFA_ID,
         quantidade
@@ -95,29 +95,34 @@ async function pagar() {
       pix = JSON.parse(text);
     } catch (e) {
       console.error("Resposta não é JSON:", text);
-      throw new Error("Erro no servidor");
+      throw new Error("Erro no servidor (resposta inválida)");
+    }
+
+    // ✅ MOSTRA O ERRO REAL DO BACKEND
+    if (!res.ok) {
+      console.error("Erro createPix:", pix);
+      throw new Error(pix?.detalhe || pix?.error || "Erro ao gerar PIX");
     }
 
     if (!pix.qr || !pix.pix_copia_e_cola) {
-      throw new Error("PIX inválido");
+      throw new Error("Servidor não retornou QR do PIX");
     }
 
     document.getElementById("pixResultado").style.display = "block";
-    document.getElementById("qrPix").src =
-      `data:image/png;base64,${pix.qr}`;
-    document.getElementById("pixCode").value =
-      pix.pix_copia_e_cola;
+    document.getElementById("qrPix").src = `data:image/png;base64,${pix.qr}`;
+    document.getElementById("pixCode").value = pix.pix_copia_e_cola;
 
     iniciarVerificacaoPagamento(pix.payment_id);
     btn.innerText = "PIX Gerado ✔";
 
   } catch (err) {
     console.error("Erro no pagamento:", err);
-    alert("Erro ao gerar pagamento.");
+    alert(err.message || "Erro ao gerar pagamento.");
     btn.innerText = "Confirmar e Gerar PIX";
     btn.disabled = false;
   }
 }
+
 
 
 // ===== AUXILIARES =====
