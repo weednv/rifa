@@ -26,34 +26,41 @@ export default async function handler(req, res) {
         transaction_amount: Number(valor),
         description: "Pagamento Rifa",
         payment_method_id: "pix",
-        payer: {
-          email,        // pode ser pix@rifa.com
-          first_name: name,
-        },
+        payer: { email, first_name: name },
+
+        // ✅ deixe, mas SÓ se BASE_URL estiver correto (https)
         notification_url: `${process.env.BASE_URL}/api/webhook`,
       },
     });
 
+    const qrBase64 = result?.point_of_interaction?.transaction_data?.qr_code_base64;
+    const copiaCola = result?.point_of_interaction?.transaction_data?.qr_code;
+
+    if (!qrBase64 || !copiaCola) {
+      return res.status(500).json({ error: "MP não retornou QR PIX" });
+    }
+
     await Pagamento.create({
       rifa_id,
-      contato: contato || email,  // vínculo real
+      contato: contato || email,
       email_mp: email,
       quantidade,
       valor_total: valor,
       payment_id: String(result.id),
       status: "pendente",
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
     return res.status(200).json({
-      qr: result.point_of_interaction.transaction_data.qr_code_base64,
-      pix_copia_e_cola: result.point_of_interaction.transaction_data.qr_code,
+      qr: qrBase64,
+      pix_copia_e_cola: copiaCola,
       payment_id: String(result.id),
     });
   } catch (error) {
     console.error("ERRO MP:", error);
     return res.status(500).json({
       error: "Erro ao gerar PIX",
-      detalhe: error.message,
+      detalhe: error?.message || "erro",
     });
   }
 }

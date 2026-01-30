@@ -139,16 +139,51 @@ function copiarPix() {
 
 // ===== VERIFICAR PAGAMENTO =====
 function iniciarVerificacaoPagamento(paymentId) {
+  const statusEl = document.getElementById("statusPagamento");
+  const numerosEl = document.getElementById("numerosComprados");
+  const btn = document.getElementById("btnConfirmarPagamento");
+
+  if (statusEl) statusEl.innerText = "⏳ Aguardando pagamento...";
+  if (numerosEl) {
+    numerosEl.style.display = "none";
+    numerosEl.innerHTML = "";
+  }
+
   const intervalo = setInterval(async () => {
     try {
       const res = await fetch(
-        `/api/consultarPagamento?payment_id=${paymentId}`
+        `/api/consultarPagamentos?payment_id=${paymentId}`
       );
       const data = await res.json();
 
+      // Atualiza status na tela
+      if (data.status === "pendente") {
+        if (statusEl) statusEl.innerText = "⏳ Aguardando pagamento...";
+        return;
+      }
+
+      if (data.status === "processando") {
+        if (statusEl) statusEl.innerText = "⚙️ Pagamento confirmado. Gerando números...";
+        return;
+      }
+
+      if (data.status === "expirado") {
+        clearInterval(intervalo);
+        if (statusEl) statusEl.innerText = "❌ Esse PIX expirou. Gere um novo.";
+
+        // libera o botão pra gerar outro pix
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Confirmar e Gerar PIX";
+        }
+        return;
+      }
+
       if (data.status === "pago") {
         clearInterval(intervalo);
-        mostrarNumeros(data.numeros);
+        if (statusEl) statusEl.innerText = "✅ Pagamento aprovado! Seus números:";
+        mostrarNumeros(data.numeros || []);
+        return;
       }
     } catch (e) {
       console.error("Erro ao consultar pagamento", e);
@@ -156,10 +191,30 @@ function iniciarVerificacaoPagamento(paymentId) {
   }, 4000);
 }
 
+
 // ===== MOSTRAR NÚMEROS =====
 function mostrarNumeros(numeros) {
-  alert(
-    "✅ Pagamento confirmado!\n\nSeus números:\n" +
-    numeros.join(", ")
-  );
+  const numerosEl = document.getElementById("numerosComprados");
+
+  // Se não existir o elemento na página, mantém fallback antigo
+  if (!numerosEl) {
+    alert(
+      "✅ Pagamento confirmado!\n\nSeus números:\n" +
+      numeros.join(", ")
+    );
+    return;
+  }
+
+  numerosEl.innerHTML = "";
+  numerosEl.style.display = "flex";
+
+  numeros.forEach((num) => {
+    const span = document.createElement("span");
+    span.innerText = num;
+    span.style.padding = "8px 10px";
+    span.style.background = "#eee";
+    span.style.borderRadius = "8px";
+    span.style.fontWeight = "bold";
+    numerosEl.appendChild(span);
+  });
 }
