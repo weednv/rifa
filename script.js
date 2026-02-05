@@ -187,6 +187,20 @@ function iniciarVerificacaoPagamento(paymentId) {
 
       if (data.status === "pago") {
         clearInterval(intervalo);
+        // 1) Some QR/PIX da tela (atualiza a tela)
+        const pixBox = document.getElementById("pixResultado");
+        if (pixBox) pixBox.style.display = "none";
+
+        // 2) Mostra mensagem de compra concluída
+        if (compraEl) compraEl.style.display = "block";
+
+        // 3) Trava o botão
+        if (btn) {
+          btn.disabled = true;
+          btn.innerText = "Compra Concluída ✅";
+        }
+
+        // 4) Mantém o que você já faz (mostra números)
         if (statusEl) statusEl.innerText = "✅ Pagamento aprovado! Seus números:";
         mostrarNumeros(data.numeros || []);
         return;
@@ -196,6 +210,7 @@ function iniciarVerificacaoPagamento(paymentId) {
     }
   }, 4000);
 }
+
 
 
 // ===== MOSTRAR NÚMEROS =====
