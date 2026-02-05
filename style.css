@@ -437,3 +437,26 @@ html, body {
   font-weight: 600;
   color: #f59e0b;
 }
+/*============== Botao voltar ==================*/
+
+.btn-voltar {
+  background: linear-gradient(135deg, #1f2933, #0f172a);
+  color: #e5e7eb;
+
+  border: none;
+  border-radius: 12px;
+
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-voltar:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  transform: translateY(-2px);
+}
