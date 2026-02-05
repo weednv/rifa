@@ -155,12 +155,16 @@ function iniciarVerificacaoPagamento(paymentId) {
     numerosEl.innerHTML = "";
   }
 
-  const intervalo = setInterval(async () => {
-    try {
-      const res = await fetch(
-        `/api/consultarPagamentos?payment_id=${paymentId}`
-      );
-      const data = await res.json();
+ const intervalo = setInterval(async () => {
+  try {
+    const res = await fetch(
+      `/api/consultarPagamento?payment_id=${paymentId}`
+    );
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+    const data = await res.json();
+
 
       // Atualiza status na tela
       if (data.status === "pendente") {
