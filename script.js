@@ -148,7 +148,7 @@ function iniciarVerificacaoPagamento(paymentId) {
   const statusEl = document.getElementById("statusPagamento");
   const numerosEl = document.getElementById("numerosComprados");
   const btn = document.getElementById("btnConfirmarPagamento");
-
+    const compraEl = document.getElementById("compraConcluida"); 
   if (statusEl) statusEl.innerText = "⏳ Aguardando pagamento...";
   if (numerosEl) {
     numerosEl.style.display = "none";
